@@ -1,0 +1,12 @@
+#ignore data folder
+.data/
+
+#ignore cach files
+__pycache__/
+.DS_store
+
+#ignore test file
+test_books.py
+
+
+
