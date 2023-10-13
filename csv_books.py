@@ -1,30 +1,37 @@
 import csv
 
+"""
+file: csv_writer.py
+This file contains function for writing all the scraped book data into CSV files.
+"""
 
-def write_csv(books_dict):
-    """
-    Write all the data into file.csv
-    
-    :args --> books_dict is a list of dicts contain all the data needed
-    """
-    #define columns names
-    csv_columns = ['product_page_url',
-                  'universal_product_code(upc)',
-                  'title',
-                  'price_excluding_tax',
-                  'price_including_tax',
-                  'number_available',
-                  'product_description',
-                  'category',
-                  'review_rating',
-                  'image_url']
-    
-    #define csv_path to find file.csv
-    csv_path = 'data/test.csv'
 
-    #Open the file and write down all the data into the attributed columns
-    with open(csv_path, 'w', newline='', encoding='utf-8') as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+def write_csv(books):
+    """
+    Writes the book data to a CSV file for a specific category.
+    Args:
+        books (list): A list of dictionaries containing book data.
+    Returns:
+        None
+    """
+    csv_columns = [
+        "title",
+        "universal_product_code(upc)",
+        "product_page_url",
+        "price_excluding_tax",
+        "price_including_tax",
+        "availablility",
+        "product_description",
+        "category",
+        "review_rating",
+        "image_url",
+        "image_path",
+    ]
+    categorie = books[0]["category"]
+    csv_file = categorie + ".csv"
+
+    with open("data/" + categorie + "/" + csv_file, "w", errors="replace") as csv_file:
+        writer = csv.DictWriter(csv_file, delimiter=";", fieldnames=csv_columns)
         writer.writeheader()
-        for data in books_dict:
+        for data in books:
             writer.writerow(data)

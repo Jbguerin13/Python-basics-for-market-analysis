@@ -5,136 +5,153 @@ import os
 
 
 class Book:
-    
-    #mettre url en attribut de classe
-    
+    """
+    A class for scraping book data from a specific URL.
+    """
+
     def get_soup(self, url):
         """
-        Return --> soup, used to parse HTML content
+        Fetches and returns BeautifulSoup object for a given URL.
+        Args:
+            url (str): The URL of the web page to scrape.
+        Returns:
+            soup: A BeautifulSoup object representing the parsed HTML content.
         """
-        response = requests.get(url, headers= {"accept-language" : "en-US"})
-        soup = BeautifulSoup(response.content, 'html.parser')
+        html = requests.get(url).content.decode("utf8").encode("utf8", "ignore")
+        soup = BeautifulSoup(html, "lxml")
         return soup
 
-
-    def title(self, url):
+    def get_url(self, url):
         """
-        Scrap the book titles
+        Extracts and returns the product page URL.
+        Args:
+            url (str): The URL of the product page.
+        Returns:
+            dict: A dictionary containing the product page URL.
+        """
+        return {"product_page_url": url}
+
+    def get_title(self, url):
+        """
+        Extracts and returns the title of the book from the soup object.
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the parsed HTML content.
+        Returns:
+            dict: A dictionary containing the book title.
         """
         soup = self.get_soup(url)
-        return {'title' : soup.find("h1").string}
+        return {"title": soup.h1.text}
 
-
-    def upc(self, url):
+    def get_reviews(self, url):
         """
-        Scrap upc from the tag 'td' of the HTML class 'table table-striped'
+        Extracts and returns review rating and product description from the soup object.
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the parsed HTML content.
+        Returns:
+            dict: A dictionary containing review rating and product description.
         """
         soup = self.get_soup(url)
-        extract_td = soup.find(class_= "table table-striped").find("td")
-        
-        return {
-            "universal_product_code(upc)" : extract_td.string.strip('£')
-            }
-
-
-    def prices(self, url) : 
-        """
-        Scrap the book prices (excluding and including taxes)
-        """
-        soup = self.get_soup(url)
-        extract_td = soup.find(class_= "table table-striped").find_all("td")
-        
-        return {
-            "price_excluding_tax" : extract_td[2].string.strip('£'),
-            "price_including_tax" : extract_td[3].string.strip('£')
-        }
-
-    def availability(self, url) : 
-        """
-        Scrap the book avaibilities
-        """
-        soup = self.get_soup(url)
-        extract_td = soup.find(class_= "table table-striped").find_all("td")
-        
-        return {
-            "number_available" : extract_td[5].string
-        }
-
-
-    def description(self, url) : 
-        """
-        Scrap the book description
-        Variables :
-            response : get the server response from the request
-            tree : get and parse the HTML content
-            p_text : extract text from the specific paragraphs
-        Return a dict
-        """
-        response = requests.get(url, headers= {"accept-language" : "en-US"})
-        tree = html.fromstring(response.text)
-        p_text = tree.xpath("//*[@id='content_inner']/article/p/text()")
-        
-        return {
-            "product_description" : p_text[0] if p_text else "Description non disponible"
-        }
-        
-        
-    def category(self, url) : 
-        """
-        Scrap the book category
-        """
-        soup = self.get_soup(url)
-        extract_ul = soup.ul.find_all("a")
-        category_text = extract_ul[-1].text if extract_ul else "Description non disponible"
-        
-        return {"category" : category_text}
-
-
-    def reviews(self, url):
-        """
-        Scrap the book reviews
-        """
+        desc = ""
         review = ""
-        soup = self.get_soup(url)
-        
-        for p in soup.find_all("p"):
+
+        for i in soup.find_all("p"):
             try:
-                rating = p["class"]
-                if "star-rating" in rating:
-                    review = rating[1]
+                star = i["class"]
+                if "star-rating" in star:
+                    review = star[1]
             except KeyError:
-                continue 
+                desc = i.text
+        return {"review_rating": review, "product_description": desc}
 
-        return {"review_rating": review}
-
-
-    def image(self, url):
+    def get_category(self, url):
         """
-        Scrap the book cover
+        Extracts and returns the category of the book from the soup object.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the parsed HTML content.
+
+        Returns:
+            dict: A dictionary containing the book category.
         """
         soup = self.get_soup(url)
-        img_element = soup.img['src'].replace('../..', 'http://books.toscrape.com')
-        img_data = requests.get(img_element)
-        filename = 'data/image.jpg' #specify file name
-        with open(filename, 'wb') as img_file:  #open binary file and write data
-            img_file.write(img_data.content)
+        for a in soup.ul.find_all("a"):
+            if "Home" not in a.text and "Books" not in a.text:
+                return {"category": a.text}
 
-        return {
-            'image_url': img_element,
-        }
-    
-    def generate_data(self,url):
+    def get_upc_prices(self, url):
         """
-        Save all the data scraped in a dict book_data
+        Extracts and returns UPC, prices, and availability from the soup object.
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the parsed HTML content.
+        Returns:
+            dict: A dictionary containing UPC, prices, and availability.
+        """
+        soup = self.get_soup(url)
+
+        upc = ""
+        excluding_tax = ""
+        including_tax = ""
+        availability = ""
+
+        for tr in soup.find_all("tr"):
+            if "UPC" in tr.text:
+                upc = tr.td.text
+            elif "excl" in tr.text:
+                excluding_tax = tr.td.text.replace("Â", "")
+            elif "incl" in tr.text:
+                including_tax = tr.td.text.replace("Â", "")
+            elif "Availability" in tr.text:
+                availability = (
+                    tr.td.text.split(" ")[3].replace("(", "").replace(")", "")
+                )
+        return {
+            "universal_product_code(upc)": upc,
+            "price_excluding_tax": excluding_tax,
+            "price_including_tax": including_tax,
+            "availablility": availability,
+        }
+
+    def get_img(self, url):
+        """
+        Downloads the book cover image and returns image URL and local path.
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the parsed HTML content.
+            url (str): The URL of the book page.
+            category (str): The category of the book.
+            title (str): The title of the book.
+        Returns:
+            dict: A dictionary containing image URL and local path.
+        """
+        soup = self.get_soup(url)
+
+        img_url = soup.img["src"].replace("../..", "http://books.toscrape.com")
+        img = requests.get(img_url)
+        category = self.get_category(url)
+        title = self.get_title(url)
+        path = "data/" + category["category"] + "/imgs"
+        img_title = "".join([x for x in title["title"] if x.isalnum()]) + ".jpg"
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+        # write image
+        open(path + "/" + img_title, "wb").write(img.content)
+
+        return {"image_url": img_url, "image_path": path + "/" + img_title}
+
+    def generate_data(self, url):
+        """
+        Scrapes and returns data for a book from the given URL.
+        Args:
+            url (str): The URL of the book page.
+        Returns:
+            dict: A dictionary containing book data.
         """
         book_data = {}
-        book_data.update(self.title(url))
-        book_data.update(self.description(url))
-        book_data.update(self.availability(url))
-        book_data.update(self.reviews(url))
-        book_data.update(self.category(url))
-        book_data.update(self.prices(url))
-        book_data.update(self.upc(url))
-        book_data.update(self.image(url))
+        book_data.update(self.get_url(url))
+        book_data.update(self.get_title(url))
+        book_data.update(self.get_reviews(url))
+        book_data.update(self.get_category(url))
+        book_data.update(self.get_upc_prices(url))
+        book_data.update(self.get_img(url))
 
         return book_data
