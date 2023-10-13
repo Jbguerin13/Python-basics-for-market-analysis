@@ -1,39 +1,20 @@
-## Context
+## Contexte et introduction
 
 <br>
 
-**Utilisez les bases de Python pour l'analyse de marché** is a project from [OpenClassroom school](https://www.lewagon.com/data-science-course) in Paris, batch #1002 (Sept.-Dec. 2022). The objective is to develop, train and apply **neural networks models** on the [QuickDraw dataset](https://console.cloud.google.com/storage/browser/quickdraw_dataset/) published by [Google Creative Lab](https://github.com/googlecreativelab/quickdraw-dataset). 100 categories of sketches have been selected and were used to train a CNN-based model and a RNN-based model in order to categorize drawings.
+**Utilisez les bases de Python pour l'analyse de marché** est le 2ème projet de [l'école OpenClassroom](https://openclassrooms.com/fr). L'objectif est de travailler sur le processus d'extraction de données ETL **Extract Transform Load**. Les données à scraper sont sur le site [Book to scrap](http://books.toscrape.com/index.html).
 
 <br>
 
-## Acknowledgments
-
-👉 Thanks to our supervizor [Laure de Grave](https://github.com/casicoco) and our Lead Teacher [Vincent Moreau](https://github.com/vtmoreau) for their help and investment on this project.
-
-👉 Thanks to Google Creative Lab for the quickdraw-dataset from [googlecreativelab repository](https://github.com/googlecreativelab/quickdraw-dataset)
-
-[![Google Creative Lab - Github](images/googlecolab_logo.png)](https://github.com/googlecreativelab/quickdraw-dataset)
-
 <br>
 
-## Summary
-
-1. Initialize our [Repository Github for deepdraw](https://github.com/Sythak/deepdraw)
-2. Downloading, loading and prepare the Quick Draw dataset for CNN-based Model
-3. Initialize and run the CNN-based model
-4. Create an API and fast API with streamlit 👉 it will be our user interface
-5. Store the work on Mlflow
-6. Create a Docker container and push it in production with GCP
-7. Going further 👉 do the same with a sequential data and a RNN-based model
-
-
+# Scraping et Organisation
 <br>
 
-# 1️⃣ Project Setup 🛠
+## Arborescence du projet
 
-## deepdraw directory
-
-We create our working environment diagrammed by this tree directory
+Trouvez ci-dessous l'organisation du projet.
+<br>
 
 ```bash
 .
@@ -49,27 +30,59 @@ We create our working environment diagrammed by this tree directory
 ```
 <br>
 
-# 2️⃣  Preprocess the data 📡
+## Les données à extraire
 
 <br>
 
-## Convolutional and Recurrent Neural Network models
+La consigne est d'extraire les données suivante pour chaque livres :
+<br>
+
+    - title
+    - universal_product_code(upc)
+    - product_page_url
+    - price_excluding_tax
+    - price_including_tax
+    - availablility
+    - product_description
+    - category
+    - review_rating
+    - image_url
+    - image_path
 
 <br>
 
-### 💻 Encoding data to tfrecords
+# Lancement du projet
 
 <br>
 
-For our CNN model, we use the data in **.npy type** from QuickDraw dataset. This allows us to use bitmap format for our images. One categorie (cats for exemple) contains **100 000 differents draws** .
+Pour lancer le programme vous devrez suivre les étapes suivantes :
 
-The real challenge consists in loading and running the model for **100 categories**, corresponding to **10 000 000 drawingss** !!! 🙊
+<br>
 
-That's why we convert the data in tensorflow object called tfrecord to optimize the memory usage.
+Commencez tout d'abord par installer Python. Lancez ensuite la console, placez vous dans le dossier de votre choix puis clonez ce repository:
 
-A similar data preprocessing is used for the RNN model to encode tfrecords.
+```bash
+git clone 
+```
 
-The code needed to encode tfrecords from .npy opr ndjson format is in the `tfrecords.py` file.
+Placez vous dans le dossier **projet_web-scraping**, puis créez un nouvel environnement virtuel et activez le :
+
+```bash
+python -m venv nom_env
+source nom_env/bin/activate
+```
+
+Il ne reste plus qu'à installer les packages requis:
+
+```bash
+pip install -r requirements.txt
+```
+
+Vous pouvez ensuite lancer le programme en appelant la commande suivante :
+```bash
+python main.py
+```
+
 <br>
 
 # 3️⃣ Make and run the models
